@@ -1,0 +1,6 @@
+[
+    {"id": 1, "animal_id": 1, "feeding_date": "2026-10-07",
+     "food": "сухой корм", "amount": 120},
+    {"id": 2, "animal_id": 2, "feeding_date": "2026-10-07",
+     "food": "каша с мясом", "amount": 300}
+]

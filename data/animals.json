@@ -1,0 +1,6 @@
+[
+    {"id": 1, "name": "Барсик", "species": "кот", "daily_norm": 200},
+    {"id": 2, "name": "Рекс", "species": "собака", "daily_norm": 600},
+    {"id": 3, "name": "Мурка", "species": "кошка", "daily_norm": 180},
+    {"id": 4, "name": "Кеша", "species": "попугай", "daily_norm": 40}
+]

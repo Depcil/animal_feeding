@@ -1,41 +1,126 @@
-"""PR1: проверка возможности кормления животного."""
-from datetime import date
+"""Консольное приложение учета кормления животных (ПР2)."""
+from animals import (
+    add_animal,
+    check_animal_norm,
+    filter_animals_by_norm,
+    find_animal,
+    sort_animals,
+)
+from feedings import (
+    cancel_feeding,
+    create_feeding,
+    get_feeding_status,
+    is_feeding_allowed,
+)
+from storage import (
+    load_animals,
+    load_feedings,
+    save_animals,
+    save_feedings,
+)
+from utils import input_date, input_int
 
-animal_name = "Барсик"
-species = "кот"
-daily_norm = 200
-fed_today = int("120")
-portion = int("100")
-feeding_date = date(2026, 10, 7)
+ANIMALS_FILE = "data/animals.json"
+FEEDINGS_FILE = "data/feedings.json"
+
+MENU = """
+=== Сервис учета кормления животных ===
+1. Показать животных
+2. Найти животное по кличке или виду
+3. Проверить порцию по суточной норме
+4. Проверить возможность кормления на дату
+5. Записать кормление
+6. Отменить кормление
+7. Показать кормления
+8. Добавить животное
+9. Показать животных по возрастанию нормы
+10. Отобрать животных по норме
+0. Выход
+"""
 
 
-def calc_remaining_norm(daily_norm, fed_today):
-    """Вернуть остаток суточной нормы в граммах."""
-    remaining = daily_norm - fed_today
-    if remaining < 0:
-        return 0
-    return remaining
+def show_animals(animals: list[dict]) -> None:
+    """Вывести список животных."""
+    if not animals:
+        print("Животные не найдены.")
+    for a in animals:
+        print(f"{a['id']}. {a['name']} ({a['species']}), "
+              f"норма {a['daily_norm']} г/сутки")
 
 
-def is_portion_allowed(daily_norm, fed_today, portion):
-    """Проверить, что порция не превысит суточную норму."""
-    return fed_today + portion <= daily_norm
+def show_feedings(feedings: list[dict], animals: dict[int, dict]) -> None:
+    """Вывести список кормлений."""
+    if not feedings:
+        print("Кормлений нет.")
+    for f in feedings:
+        name = animals[f["animal_id"]]["name"]
+        print(f"{f['id']}. {name}: {f['feeding_date']}, "
+              f"{f['food']}, {f['amount']} г")
 
 
-def get_feeding_status(is_allowed):
-    """Вернуть текстовый статус кормления."""
-    if is_allowed:
-        return "Кормление разрешено"
-    return "Суточная норма будет превышена"
+def main() -> None:
+    """Точка запуска: цикл меню."""
+    animals = load_animals(ANIMALS_FILE)
+    feedings = load_feedings(FEEDINGS_FILE)
+    while True:
+        print(MENU)
+        choice = input("Выберите действие: ").strip()
+        if choice == "0":
+            break
+        elif choice == "1":
+            show_animals(list(animals.values()))
+        elif choice == "2":
+            query = input("Кличка или вид: ")
+            show_animals(find_animal(animals, query))
+        elif choice == "3":
+            animal_id = input_int("ID животного: ")
+            amount = input_int("Порция, г: ")
+            ok = check_animal_norm(animals, animal_id, amount)
+            print("Порция укладывается в норму" if ok
+                  else "Порция больше суточной нормы или животного нет")
+        elif choice == "4":
+            animal_id = input_int("ID животного: ")
+            day = input_date("Дата (ДД.ММ.ГГГГ): ")
+            amount = input_int("Порция, г: ")
+            print(get_feeding_status(is_feeding_allowed(
+                feedings, animals, animal_id, day, amount)))
+        elif choice == "5":
+            animal_id = input_int("ID животного: ")
+            day = input_date("Дата (ДД.ММ.ГГГГ): ")
+            food = input("Корм: ")
+            amount = input_int("Порция, г: ")
+            result = create_feeding(
+                feedings, animals, animal_id, day, food, amount)
+            if result is None:
+                print("Кормление не записано: норма превышена.")
+            else:
+                save_feedings(FEEDINGS_FILE, feedings)
+                print(f"Кормление записано, ID {result['id']}.")
+        elif choice == "6":
+            if cancel_feeding(feedings, input_int("ID кормления: ")):
+                save_feedings(FEEDINGS_FILE, feedings)
+                print("Кормление отменено.")
+            else:
+                print("Кормление не найдено.")
+        elif choice == "7":
+            show_feedings(feedings, animals)
+        elif choice == "8":
+            name = input("Кличка: ")
+            species = input("Вид: ")
+            norm = input_int("Суточная норма, г: ")
+            add_animal(animals, name, species, norm)
+            save_animals(ANIMALS_FILE, animals)
+            print("Животное добавлено.")
+        elif choice == "9":
+            show_animals(sort_animals(animals))
+        elif choice == "10":
+            show_animals(filter_animals_by_norm(
+                animals, input_int("Минимальная норма, г: ")))
+        else:
+            print("Неизвестный пункт меню.")
+    save_animals(ANIMALS_FILE, animals)
+    save_feedings(FEEDINGS_FILE, feedings)
 
 
-def format_animal_card(animal_name, species, daily_norm):
-    """Сформировать строку с карточкой животного."""
-    return f"{animal_name} ({species}), норма {daily_norm} г/сутки"
-
-
-print(format_animal_card(animal_name, species, daily_norm))
-print(f"Дата: {feeding_date}")
-print(f"Уже получено: {fed_today} г, порция: {portion} г")
-print(f"Остаток нормы: {calc_remaining_norm(daily_norm, fed_today)} г")
-print(get_feeding_status(is_portion_allowed(daily_norm, fed_today, portion)))
+if __name__ == "__main__":
+    main()
