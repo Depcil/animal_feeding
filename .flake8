@@ -1,2 +1,4 @@
 [flake8]
 extend-exclude = venv,migrations
+per-file-ignores =
+    petfeed/settings.py:E501

@@ -112,3 +112,14 @@ def show_feedings(feedings: List[Feeding]) -> None:
         print("Кормлений нет.")
     for feeding in feedings:
         print(f"{feeding.id}. {feeding}")
+
+
+def find_feeding_by_id(
+    feedings: List[Feeding],
+    feeding_id: int,
+) -> Optional[Feeding]:
+    """Найти кормление по идентификатору."""
+    for feeding in feedings:
+        if feeding.id == feeding_id:
+            return feeding
+    return None
