@@ -19,8 +19,3 @@ def input_date(prompt: str) -> date:
             return datetime.strptime(text, "%d.%m.%Y").date()
         except ValueError:
             print("Ошибка: введите дату в формате ДД.ММ.ГГГГ.")
-
-
-def next_id(items: list) -> int:
-    """Вернуть следующий свободный идентификатор."""
-    return max(items, default=0) + 1
