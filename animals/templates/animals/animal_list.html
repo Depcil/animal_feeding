@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Животные – PetFeed
+{% endblock %}
+
+{% block content %}
+    <h1>Животные</h1>
+
+    <p>
+        Всего животных: {{ animals|length }}
+    </p>
+
+    {% for animal in animals %}
+        {% include "animals/includes/animal_card.html" %}
+    {% empty %}
+        <p>Животные не найдены.</p>
+    {% endfor %}
+{% endblock %}

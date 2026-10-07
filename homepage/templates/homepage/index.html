@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Главная – PetFeed
+{% endblock %}
+
+{% block content %}
+    <h1 class="display-4">PetFeed</h1>
+
+    <p class="lead">
+        Сервис учета кормления животных.
+    </p>
+    <p>
+        Следите за суточной нормой корма каждого животного и
+        историей кормлений.
+    </p>
+    <p>Основные разделы:</p>
+    <a href="{% url 'animals:list' %}" class="btn btn-primary me-2">
+        Животные
+    </a>
+    <a href="{% url 'feedings:list' %}" class="btn btn-secondary">
+        Кормления
+    </a>
+{% endblock %}

@@ -1,0 +1,19 @@
+<article class="card room-card mb-3">
+    <div class="card-body">
+        <h2 class="card-title">
+            {{ animal.name|default:"Без клички" }}
+        </h2>
+
+        <p class="card-text">
+            Вид: {{ animal.species }}.
+            Суточная норма: {{ animal.daily_norm }} г
+        </p>
+
+        <a
+            href="{% url 'animals:detail' animal.id %}"
+            class="btn btn-primary"
+        >
+            Подробнее
+        </a>
+    </div>
+</article>

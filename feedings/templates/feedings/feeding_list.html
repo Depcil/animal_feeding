@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Кормления – PetFeed
+{% endblock %}
+
+{% block content %}
+    <h1>Кормления</h1>
+
+    <p>
+        Всего записей: {{ feedings|length }}
+    </p>
+
+    <ul class="list-group">
+        {% for feeding in feedings %}
+            <li class="list-group-item d-flex justify-content-between">
+                <a href="{% url 'feedings:detail' feeding.id %}">
+                    №{{ feeding.id }}: {{ feeding.animal.name }} –
+                    {{ feeding.feeding_date }},
+                    {{ feeding.amount }} г ({{ feeding.user.name }})
+                </a>
+                {% include "feedings/includes/feeding_status.html" %}
+            </li>
+        {% empty %}
+            <li class="list-group-item">Кормления не найдены.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

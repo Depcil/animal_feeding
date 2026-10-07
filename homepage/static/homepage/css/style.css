@@ -1,0 +1,24 @@
+body {
+    min-height: 100vh;
+    background-color: #fbfaf6;
+}
+
+.room-card {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid #e3d9c6;
+    border-left: 6px solid #e0902b;
+    border-radius: 8px;
+}
+
+.booking-status {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.petfeed-logo {
+    display: block;
+    width: 90px;
+    height: auto;
+    margin: 1rem auto 0.5rem 1rem;
+}

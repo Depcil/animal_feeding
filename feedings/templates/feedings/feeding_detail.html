@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if feeding %}
+        Кормление №{{ feeding.id }} – PetFeed
+    {% else %}
+        Кормление не найдено – PetFeed
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if feeding %}
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title">Кормление №{{ feeding.id }}</h1>
+
+                <p class="card-text">
+                    <strong>Животное:</strong> {{ feeding.animal.name }}
+                </p>
+                <p class="card-text">
+                    <strong>Дата:</strong> {{ feeding.feeding_date }}
+                </p>
+                <p class="card-text">
+                    <strong>Корм:</strong> {{ feeding.food }},
+                    {{ feeding.amount }} г
+                </p>
+                <p class="card-text">
+                    <strong>Сотрудник:</strong> {{ feeding.user.name }}
+                </p>
+                <p class="card-text">
+                    <strong>Статус:</strong>
+                    {% include "feedings/includes/feeding_status.html" %}
+                </p>
+            </div>
+        </div>
+    {% else %}
+        <h1 class="text-danger">Кормление не найдено</h1>
+        <p>Кормление с указанным идентификатором отсутствует.</p>
+    {% endif %}
+
+    <a
+        href="{% url 'feedings:list' %}"
+        class="btn btn-outline-secondary mt-3"
+    >
+        ← к списку кормлений
+    </a>
+{% endblock %}
