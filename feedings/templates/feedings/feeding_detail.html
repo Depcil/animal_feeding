@@ -15,7 +15,11 @@
                 <h1 class="card-title">Кормление №{{ feeding.id }}</h1>
 
                 <p class="card-text">
-                    <strong>Животное:</strong> {{ feeding.animal.name }}
+                    <strong>Животное:</strong>
+                    <a href="{% url 'animals:detail' feeding.animal_id %}?date={{ feeding.feeding_date }}">
+                        {{ feeding.animal_name }}
+                    </a>
+                    (норма {{ feeding.daily_norm }} г/сутки)
                 </p>
                 <p class="card-text">
                     <strong>Дата:</strong> {{ feeding.feeding_date }}
@@ -25,12 +29,18 @@
                     {{ feeding.amount }} г
                 </p>
                 <p class="card-text">
-                    <strong>Сотрудник:</strong> {{ feeding.user.name }}
+                    <strong>Сотрудник:</strong> {{ feeding.user_name }}
+                    ({{ feeding.user_email }})
                 </p>
                 <p class="card-text">
                     <strong>Статус:</strong>
                     {% include "feedings/includes/feeding_status.html" %}
                 </p>
+                {% if feeding.comment %}
+                    <p class="card-text">
+                        <strong>Комментарий:</strong> {{ feeding.comment }}
+                    </p>
+                {% endif %}
             </div>
         </div>
     {% else %}

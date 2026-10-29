@@ -7,17 +7,26 @@
 {% block content %}
     <h1>Кормления</h1>
 
+    <nav class="nav nav-pills mb-3">
+        <a class="nav-link {% if status == 'all' %}active{% endif %}"
+           href="{% url 'feedings:list' %}">Все</a>
+        <a class="nav-link {% if status == 'active' %}active{% endif %}"
+           href="{% url 'feedings:list' %}?status=active">Активные</a>
+        <a class="nav-link {% if status == 'cancelled' %}active{% endif %}"
+           href="{% url 'feedings:list' %}?status=cancelled">Отмененные</a>
+    </nav>
+
     <p>
-        Всего записей: {{ feedings|length }}
+        Всего записей: {{ total }}
     </p>
 
     <ul class="list-group">
         {% for feeding in feedings %}
             <li class="list-group-item d-flex justify-content-between">
                 <a href="{% url 'feedings:detail' feeding.id %}">
-                    №{{ feeding.id }}: {{ feeding.animal.name }} –
+                    №{{ feeding.id }}: {{ feeding.animal_name }} –
                     {{ feeding.feeding_date }},
-                    {{ feeding.amount }} г ({{ feeding.user.name }})
+                    {{ feeding.amount }} г ({{ feeding.user_name }})
                 </a>
                 {% include "feedings/includes/feeding_status.html" %}
             </li>
@@ -25,4 +34,18 @@
             <li class="list-group-item">Кормления не найдены.</li>
         {% endfor %}
     </ul>
+
+    {% if pages > 1 %}
+        <nav class="mt-3 d-flex gap-2 align-items-center">
+            {% if prev_page %}
+                <a class="btn btn-outline-secondary btn-sm"
+                   href="{% url 'feedings:list' %}?status={{ status }}&page={{ prev_page }}">←</a>
+            {% endif %}
+            <span>Страница {{ page }} из {{ pages }}</span>
+            {% if next_page %}
+                <a class="btn btn-outline-secondary btn-sm"
+                   href="{% url 'feedings:list' %}?status={{ status }}&page={{ next_page }}">→</a>
+            {% endif %}
+        </nav>
+    {% endif %}
 {% endblock %}

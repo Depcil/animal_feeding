@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Кого можно покормить – PetFeed
+{% endblock %}
+
+{% block content %}
+    <h1>Кого можно покормить</h1>
+    <p>
+        Животные, у которых на выбранную дату остался запас суточной нормы.
+        Отмененные кормления норму не занимают.
+    </p>
+
+    <form method="get" class="d-flex gap-2 align-items-end mb-3">
+        <div>
+            <label for="date" class="form-label">Дата:</label>
+            <input
+                type="date"
+                id="date"
+                name="date"
+                value="{% if feeding_date %}{{ feeding_date }}{% else %}{{ today }}{% endif %}"
+                class="form-control"
+            >
+        </div>
+        <button type="submit" class="btn btn-primary">Найти</button>
+    </form>
+
+    {% if date_error %}
+        <p class="text-danger">Дата указана неверно, используйте формат ГГГГ-ММ-ДД.</p>
+    {% endif %}
+
+    {% if feeding_date %}
+        <h2 class="h4">Дата: {{ feeding_date }}</h2>
+        {% for animal in animals %}
+            <article class="card room-card mb-3">
+                <div class="card-body">
+                    <h3 class="card-title h5">
+                        <a href="{% url 'animals:detail' animal.id %}?date={{ feeding_date }}">
+                            {{ animal.name }}
+                        </a>
+                        ({{ animal.species }})
+                    </h3>
+                    <p class="card-text">
+                        Норма: {{ animal.daily_norm }} г,
+                        получено: {{ animal.fed }} г,
+                        можно дать еще: <strong>{{ animal.remaining }} г</strong>
+                    </p>
+                </div>
+            </article>
+        {% empty %}
+            <p>На выбранную дату все животные получили суточную норму.</p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'animals:list' %}" class="btn btn-outline-secondary mt-3">
+        ← к списку животных
+    </a>
+{% endblock %}

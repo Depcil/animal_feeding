@@ -14,11 +14,18 @@
         Следите за суточной нормой корма каждого животного и
         историей кормлений.
     </p>
+    <p>
+        Животных в базе: {{ counts.animals_count }},
+        активных кормлений: {{ counts.active_feedings }}.
+    </p>
     <p>Основные разделы:</p>
     <a href="{% url 'animals:list' %}" class="btn btn-primary me-2">
         Животные
     </a>
-    <a href="{% url 'feedings:list' %}" class="btn btn-secondary">
+    <a href="{% url 'feedings:list' %}" class="btn btn-secondary me-2">
         Кормления
+    </a>
+    <a href="{% url 'feedings:statistics' %}" class="btn btn-outline-secondary">
+        Статистика
     </a>
 {% endblock %}
