@@ -4,5 +4,21 @@
     {"id": 2, "animal_id": 2, "feeding_date": "2026-10-07", "user_id": 2,
      "food": "каша с мясом", "amount": 300, "is_cancelled": false},
     {"id": 3, "animal_id": 3, "feeding_date": "2026-10-06", "user_id": 1,
-     "food": "влажный корм", "amount": 90, "is_cancelled": true}
+     "food": "влажный корм", "amount": 90, "is_cancelled": true,
+     "comment": "животное отказалось от корма"},
+    {"id": 4, "animal_id": 1, "feeding_date": "2026-10-07", "user_id": 2,
+     "food": "влажный корм", "amount": 80, "is_cancelled": false},
+    {"id": 5, "animal_id": 2, "feeding_date": "2026-10-08", "user_id": 1,
+     "food": "сухой корм", "amount": 250, "is_cancelled": false},
+    {"id": 6, "animal_id": 4, "feeding_date": "2026-10-08", "user_id": 2,
+     "food": "зерновая смесь", "amount": 25, "is_cancelled": false},
+    {"id": 7, "animal_id": 3, "feeding_date": "2026-10-08", "user_id": 1,
+     "food": "влажный корм", "amount": 100, "is_cancelled": false},
+    {"id": 8, "animal_id": 2, "feeding_date": "2026-10-08", "user_id": 2,
+     "food": "каша с мясом", "amount": 300, "is_cancelled": false},
+    {"id": 9, "animal_id": 1, "feeding_date": "2026-10-08", "user_id": 1,
+     "food": "сухой корм", "amount": 100, "is_cancelled": true,
+     "comment": "ошибочная запись"},
+    {"id": 10, "animal_id": 3, "feeding_date": "2026-10-07", "user_id": 2,
+     "food": "сухой корм", "amount": 60, "is_cancelled": false}
 ]

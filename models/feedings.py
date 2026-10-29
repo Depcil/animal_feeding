@@ -25,6 +25,7 @@ class Feeding:
         self.food = food
         self.amount = amount
         self.is_cancelled = False
+        self.comment: Optional[str] = None
 
     def cancel(self) -> None:
         """Отменить кормление (запись остается в коллекции)."""

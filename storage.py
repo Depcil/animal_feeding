@@ -75,14 +75,16 @@ def load_feedings(
             d["id"], animal, d["feeding_date"], user, d["food"], d["amount"]
         )
         feeding.is_cancelled = d["is_cancelled"]
+        feeding.comment = d.get("comment")
         feedings.append(feeding)
     return feedings
 
 
 def save_feedings(filename: str, feedings: List[Feeding]) -> None:
     """Объекты Feeding -> JSON (вместо объектов – идентификаторы)."""
-    _save_list(filename, [
-        {
+    items = []
+    for f in feedings:
+        item = {
             "id": f.id,
             "animal_id": f.animal.id,
             "feeding_date": f.feeding_date,
@@ -91,5 +93,7 @@ def save_feedings(filename: str, feedings: List[Feeding]) -> None:
             "amount": f.amount,
             "is_cancelled": f.is_cancelled,
         }
-        for f in feedings
-    ])
+        if getattr(f, "comment", None):
+            item["comment"] = f.comment
+        items.append(item)
+    _save_list(filename, items)
