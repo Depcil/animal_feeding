@@ -1,5 +1,3 @@
-from datetime import date
-
 from django.core.paginator import Paginator
 from django.db.models import Avg, Count, Max, Min, Q, Sum
 from django.db.models.functions import Coalesce
@@ -8,6 +6,7 @@ from django.shortcuts import get_object_or_404, render
 from animals.models import Animal
 from employees.models import Employee
 
+from .forms import FeedingFilterForm
 from .models import ACTIVE_STATUSES, Feeding
 
 PAGE_SIZE = 5
@@ -34,14 +33,15 @@ def _positive_int(value, default):
 
 
 def feedings(request):
-    status = request.GET.get("status", "all")
-    raw_date = request.GET.get("date", "")
-    animal_id = request.GET.get("animal", "")
-    employee_id = request.GET.get("employee", "")
-    sort = request.GET.get("sort", "date")
-    if sort not in SORT_FIELDS:
-        sort = "date"
-    error = None
+    form = FeedingFilterForm(request.GET or None)
+    # Если часть полей заполнена неверно, is_valid() вернет False,
+    # но cleaned_data все равно содержит поля, прошедшие проверку:
+    # по ним список фильтруется, а ошибки показываются над списком.
+    if form.is_bound:
+        form.is_valid()
+    filters = getattr(form, "cleaned_data", {})
+    status = filters.get("status") or "all"
+    sort = filters.get("sort") or "date"
 
     # select_related: животное и сотрудник приходят одним запросом с JOIN,
     # без отдельного обращения к базе для каждой строки списка.
@@ -49,20 +49,12 @@ def feedings(request):
 
     if status in STATUS_FILTERS:
         feedings_list = getattr(feedings_list, STATUS_FILTERS[status])()
-    else:
-        status = "all"
-
-    if raw_date:
-        try:
-            feedings_list = feedings_list.filter(
-                feeding_date=date.fromisoformat(raw_date),
-            )
-        except ValueError:
-            error = "Дата указана неверно, используйте формат ГГГГ-ММ-ДД."
-    if animal_id.isdigit():
-        feedings_list = feedings_list.filter(animal_id=int(animal_id))
-    if employee_id.isdigit():
-        feedings_list = feedings_list.filter(employee_id=int(employee_id))
+    if filters.get("date"):
+        feedings_list = feedings_list.for_date(filters["date"])
+    if filters.get("animal"):
+        feedings_list = feedings_list.filter(animal=filters["animal"])
+    if filters.get("employee"):
+        feedings_list = feedings_list.filter(employee=filters["employee"])
 
     feedings_list = feedings_list.order_by(*SORT_FIELDS[sort])
 
@@ -72,17 +64,10 @@ def feedings(request):
     )
 
     context = {
+        "form": form,
         "page_obj": page_obj,
         "feedings": page_obj.object_list,
         "total": page_obj.paginator.count,
-        "status": status,
-        "selected_date": raw_date,
-        "selected_animal": animal_id,
-        "selected_employee": employee_id,
-        "sort": sort,
-        "animals": Animal.objects.order_by("name"),
-        "employees": Employee.objects.order_by("name"),
-        "error": error,
     }
 
     return render(

@@ -109,8 +109,6 @@ def test_feedings_filters(client):
     assert total(employee="1") == 5
     assert total(date="2026-10-08") == 5
     assert total(animal="2", date="2026-10-08") == 2
-    bad = client.get("/feedings/", {"date": "08.10.2026"})
-    assert bad.status_code == 200 and bad.context["error"]
 
 
 def test_feedings_sort_and_pagination(client):

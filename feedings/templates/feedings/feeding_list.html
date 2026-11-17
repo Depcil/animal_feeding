@@ -7,68 +7,31 @@
 {% block content %}
     <h1>Кормления</h1>
 
-    <nav class="nav nav-pills mb-3">
-        <a class="nav-link {% if status == 'all' %}active{% endif %}"
-           href="{% querystring status=None page=None %}">Все</a>
-        <a class="nav-link {% if status == 'active' %}active{% endif %}"
-           href="{% querystring status='active' page=None %}">Активные</a>
-        <a class="nav-link {% if status == 'planned' %}active{% endif %}"
-           href="{% querystring status='planned' page=None %}">Запланированные</a>
-        <a class="nav-link {% if status == 'done' %}active{% endif %}"
-           href="{% querystring status='done' page=None %}">Выполненные</a>
-        <a class="nav-link {% if status == 'cancelled' %}active{% endif %}"
-           href="{% querystring status='cancelled' page=None %}">Отмененные</a>
-    </nav>
-
-    <form method="get" class="row g-2 mb-3 align-items-end">
-        <input type="hidden" name="status" value="{{ status }}">
-        <div class="col-sm-3">
-            <label for="date" class="form-label">Дата</label>
-            <input type="date" id="date" name="date" value="{{ selected_date }}"
-                   class="form-control">
-        </div>
-        <div class="col-sm-2">
-            <label for="animal" class="form-label">Животное</label>
-            <select id="animal" name="animal" class="form-select">
-                <option value="">Все</option>
-                {% for animal in animals %}
-                    <option value="{{ animal.pk }}"
-                        {% if selected_animal == animal.pk|stringformat:"s" %}selected{% endif %}>
-                        {{ animal.name }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-sm-2">
-            <label for="employee" class="form-label">Сотрудник</label>
-            <select id="employee" name="employee" class="form-select">
-                <option value="">Все</option>
-                {% for employee in employees %}
-                    <option value="{{ employee.pk }}"
-                        {% if selected_employee == employee.pk|stringformat:"s" %}selected{% endif %}>
-                        {{ employee.name }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-sm-2">
-            <label for="sort" class="form-label">Сортировка</label>
-            <select id="sort" name="sort" class="form-select">
-                <option value="date" {% if sort == "date" %}selected{% endif %}>по дате</option>
-                <option value="animal" {% if sort == "animal" %}selected{% endif %}>по животному</option>
-                <option value="employee" {% if sort == "employee" %}selected{% endif %}>по сотруднику</option>
-                <option value="amount" {% if sort == "amount" %}selected{% endif %}>по порции</option>
-            </select>
-        </div>
-        <div class="col-sm-3 d-flex gap-2">
+    <form method="get" class="row g-2 mb-3 align-items-end feeding-filter" novalidate>
+        {% for field in form %}
+            <div class="col-sm-2">
+                <label for="{{ field.id_for_label }}" class="form-label">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+            </div>
+        {% endfor %}
+        <div class="col-sm-2 d-flex gap-2">
             <button type="submit" class="btn btn-primary">Найти</button>
             <a href="{% url 'feedings:list' %}"
                class="btn btn-outline-secondary">Сбросить</a>
         </div>
     </form>
 
-    {% if error %}
-        <p class="text-danger">{{ error }}</p>
+    {% if form.errors %}
+        <div class="alert alert-warning">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <div>{{ field.label }}: {{ error }}</div>
+                {% endfor %}
+            {% endfor %}
+            Остальные условия применены.
+        </div>
     {% endif %}
 
     <p>
