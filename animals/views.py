@@ -4,7 +4,7 @@ from django.db.models import F, Q, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, render
 
-from feedings.models import Feeding
+from feedings.models import ACTIVE_STATUSES
 
 from .models import Animal
 
@@ -61,14 +61,12 @@ def animal_detail(request, animal_id):
     feeding_date = _parse_date(request.GET.get("date")) or date.today()
 
     day_feedings = (
-        Feeding.objects
-        .filter(animal=animal, feeding_date=feeding_date)
+        animal.feedings
+        .for_date(feeding_date)
         .select_related("employee")
         .order_by("pk")
     )
-    fed = day_feedings.exclude(is_cancelled=True).aggregate(
-        total=Coalesce(Sum("amount"), 0),
-    )["total"]
+    fed = day_feedings.fed_amount()
 
     context = {
         "animal": animal,
@@ -100,7 +98,7 @@ def available_animals(request):
                         "feedings__amount",
                         filter=Q(
                             feedings__feeding_date=feeding_date,
-                            feedings__is_cancelled=False,
+                            feedings__status__in=ACTIVE_STATUSES,
                         ),
                     ),
                     0,

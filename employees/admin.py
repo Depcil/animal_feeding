@@ -9,7 +9,7 @@ class EmployeeFeedingInline(admin.TabularInline):
     """Кормления, которые провел сотрудник (только просмотр)."""
 
     model = Feeding
-    fields = ("feeding_date", "animal", "food", "amount", "is_cancelled")
+    fields = ("feeding_date", "animal", "food", "amount", "status")
     readonly_fields = fields
     extra = 0
     can_delete = False

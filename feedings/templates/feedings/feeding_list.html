@@ -12,6 +12,10 @@
            href="{% querystring status=None page=None %}">Все</a>
         <a class="nav-link {% if status == 'active' %}active{% endif %}"
            href="{% querystring status='active' page=None %}">Активные</a>
+        <a class="nav-link {% if status == 'planned' %}active{% endif %}"
+           href="{% querystring status='planned' page=None %}">Запланированные</a>
+        <a class="nav-link {% if status == 'done' %}active{% endif %}"
+           href="{% querystring status='done' page=None %}">Выполненные</a>
         <a class="nav-link {% if status == 'cancelled' %}active{% endif %}"
            href="{% querystring status='cancelled' page=None %}">Отмененные</a>
     </nav>

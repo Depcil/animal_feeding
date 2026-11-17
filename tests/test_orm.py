@@ -26,14 +26,30 @@ def test_transfer_keeps_counts_and_links():
     assert feeding.animal.name == "Мурка"
     assert feeding.employee.name == "Анна Смирнова"
     assert feeding.feeding_date == date(2026, 10, 6)
-    assert feeding.is_cancelled is True
+    assert feeding.status == Feeding.Status.CANCELLED
+    # Неотмененные кормления ПР7 переносятся как выполненные.
+    assert Feeding.objects.get(pk=1).status == Feeding.Status.DONE
 
 
 def test_reverse_relations():
     rex = Animal.objects.get(name="Рекс")
     assert rex.feedings.count() == 3
     anna = Employee.objects.get(email="anna@example.com")
-    assert anna.feedings.filter(is_cancelled=False).count() == 3
+    assert anna.feedings.active().count() == 3
+
+
+def test_feeding_manager_methods():
+    assert Feeding.objects.active().count() == 8
+    assert Feeding.objects.done().count() == 8
+    assert Feeding.objects.cancelled().count() == 2
+    assert Feeding.objects.planned().count() == 0
+    day = Feeding.objects.for_date(date(2026, 10, 7))
+    assert day.count() == 4
+    # Барсик 07.10: 120 г + 80 г, отмененных в этот день нет.
+    assert day.filter(animal_id=1).fed_amount() == 200
+    # 08.10 у Барсика только отмененное кормление – в норму не входит.
+    barsik_08 = Feeding.objects.for_date(date(2026, 10, 8)).filter(animal_id=1)
+    assert barsik_08.count() == 1 and barsik_08.fed_amount() == 0
 
 
 def test_cancel_method_and_protect():
@@ -85,6 +101,8 @@ def test_feedings_filters(client):
 
     assert total(status="active") == 8
     assert total(status="cancelled") == 2
+    assert total(status="done") == 8
+    assert total(status="planned") == 0
     assert total(animal="2") == 3
     assert total(employee="1") == 5
     assert total(date="2026-10-08") == 5
@@ -117,7 +135,8 @@ def test_statistics_page(client):
     summary = response.context["summary"]
     assert summary == {
         "total_count": 10,
-        "active_count": 8,
+        "planned_count": 0,
+        "done_count": 8,
         "cancelled_count": 2,
         "total_amount": 1235,
     }

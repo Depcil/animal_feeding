@@ -1,9 +1,13 @@
-{% if feeding.is_cancelled %}
+{% if feeding.status == "cancelled" %}
     <span class="badge bg-secondary booking-status booking-status-cancelled">
-        Отменено
+        {{ feeding.get_status_display }}
+    </span>
+{% elif feeding.status == "planned" %}
+    <span class="badge bg-warning text-dark booking-status booking-status-planned">
+        {{ feeding.get_status_display }}
     </span>
 {% else %}
-    <span class="badge bg-success booking-status booking-status-active">
-        Активно
+    <span class="badge bg-success booking-status booking-status-done">
+        {{ feeding.get_status_display }}
     </span>
 {% endif %}

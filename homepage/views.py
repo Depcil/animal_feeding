@@ -7,12 +7,12 @@ from feedings.models import Feeding
 def index(request):
     counts = {
         "animals_count": Animal.objects.count(),
-        "active_feedings": Feeding.objects.filter(is_cancelled=False).count(),
+        "active_feedings": Feeding.objects.active().count(),
     }
     # Пять последних активных кормлений для блока на главной странице.
     latest = (
         Feeding.objects
-        .exclude(is_cancelled=True)
+        .active()
         .select_related("animal")[:5]
     )
 

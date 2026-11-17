@@ -12,14 +12,14 @@ class FeedingAdmin(admin.ModelAdmin):
         "employee",
         "food",
         "amount",
-        "is_cancelled",
+        "status",
     )
     list_display_links = ("id", "feeding_date")
     # Животное и сотрудник загружаются вместе со списком (JOIN),
     # а не отдельным запросом на каждую строку.
     list_select_related = ("animal", "employee")
     list_filter = (
-        "is_cancelled",
+        "status",
         "feeding_date",
         "animal__species",
         "employee",
@@ -29,9 +29,16 @@ class FeedingAdmin(admin.ModelAdmin):
     autocomplete_fields = ("animal", "employee")
     ordering = ("-feeding_date", "-id")
     list_per_page = 20
-    actions = ("mark_cancelled",)
+    actions = ("mark_done", "mark_cancelled")
+
+    @admin.action(description="Отметить выбранные кормления выполненными")
+    def mark_done(self, request, queryset):
+        updated = queryset.exclude(
+            status=Feeding.Status.CANCELLED,
+        ).update(status=Feeding.Status.DONE)
+        self.message_user(request, f"Выполнено кормлений: {updated}")
 
     @admin.action(description="Отменить выбранные кормления")
     def mark_cancelled(self, request, queryset):
-        updated = queryset.update(is_cancelled=True)
+        updated = queryset.update(status=Feeding.Status.CANCELLED)
         self.message_user(request, f"Отменено кормлений: {updated}")

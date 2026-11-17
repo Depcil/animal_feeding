@@ -64,7 +64,7 @@ def test_feedings_list_status_include(client):
     text = response.content.decode()
     assert response.status_code == 200
     assert "feedings/includes/feeding_status.html" in template_names(response)
-    assert "Активно" in text and "Отменено" in text
+    assert "Выполнено" in text and "Отменено" in text
 
 
 def test_feeding_detail_related_objects_and_404(client):

@@ -77,7 +77,13 @@ def main():
                     "feeding_date": date.fromisoformat(row["feeding_date"]),
                     "food": row["food"],
                     "amount": row["amount"],
-                    "is_cancelled": bool(row["is_cancelled"]),
+                    # Записи ПР7 – прошедшие кормления: либо выполнены,
+                    # либо отменены.
+                    "status": (
+                        Feeding.Status.CANCELLED
+                        if row["is_cancelled"]
+                        else Feeding.Status.DONE
+                    ),
                     "comment": row["comment"] or "",
                 },
             )

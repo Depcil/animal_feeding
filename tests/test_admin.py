@@ -38,7 +38,7 @@ def test_admin_search_and_filter(admin_client):
     found = admin_client.get("/admin/animals/animal/", {"q": "Рекс"})
     assert found.context["cl"].result_count == 1
     cancelled = admin_client.get(
-        "/admin/feedings/feeding/", {"is_cancelled__exact": "1"}
+        "/admin/feedings/feeding/", {"status__exact": "cancelled"}
     )
     assert cancelled.context["cl"].result_count == 2
 
@@ -53,5 +53,5 @@ def test_cancel_action(admin_client):
         "/admin/feedings/feeding/",
         {"action": "mark_cancelled", "_selected_action": ["1", "2"]},
     )
-    cancelled = Feeding.objects.filter(pk__in=[1, 2], is_cancelled=True)
+    cancelled = Feeding.objects.filter(pk__in=[1, 2]).cancelled()
     assert cancelled.count() == 2

@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404, render
 from animals.models import Animal
 from employees.models import Employee
 
-from .models import Feeding
+from .models import ACTIVE_STATUSES, Feeding
 
 PAGE_SIZE = 5
 
@@ -19,7 +19,13 @@ SORT_FIELDS = {
     "amount": ["-amount", "-feeding_date"],
 }
 
-ACTIVE = Q(is_cancelled=False)
+# Фильтр журнала по статусу -> метод FeedingQuerySet.
+STATUS_FILTERS = {
+    "active": "active",
+    "planned": "planned",
+    "done": "done",
+    "cancelled": "cancelled",
+}
 
 
 def _positive_int(value, default):
@@ -41,10 +47,8 @@ def feedings(request):
     # без отдельного обращения к базе для каждой строки списка.
     feedings_list = Feeding.objects.select_related("animal", "employee")
 
-    if status == "active":
-        feedings_list = feedings_list.exclude(is_cancelled=True)
-    elif status == "cancelled":
-        feedings_list = feedings_list.filter(is_cancelled=True)
+    if status in STATUS_FILTERS:
+        feedings_list = getattr(feedings_list, STATUS_FILTERS[status])()
     else:
         status = "all"
 
@@ -104,11 +108,15 @@ def feeding_detail(request, feeding_id):
 def statistics(request):
     min_count = _positive_int(request.GET.get("min_count"), 2)
 
+    status = Feeding.Status
     summary = Feeding.objects.aggregate(
         total_count=Count("id"),
-        active_count=Count("id", filter=ACTIVE),
-        cancelled_count=Count("id", filter=Q(is_cancelled=True)),
-        total_amount=Coalesce(Sum("amount", filter=ACTIVE), 0),
+        planned_count=Count("id", filter=Q(status=status.PLANNED)),
+        done_count=Count("id", filter=Q(status=status.DONE)),
+        cancelled_count=Count("id", filter=Q(status=status.CANCELLED)),
+        total_amount=Coalesce(
+            Sum("amount", filter=Q(status__in=ACTIVE_STATUSES)), 0,
+        ),
     )
     norms = Animal.objects.aggregate(
         animals_count=Count("id"),
@@ -119,7 +127,7 @@ def statistics(request):
 
     # Условие в filter= внутри агрегата сохраняет в списке животных
     # и сотрудников без активных кормлений (у них 0).
-    active_feedings = Q(feedings__is_cancelled=False)
+    active_feedings = Q(feedings__status__in=ACTIVE_STATUSES)
     by_animal = Animal.objects.annotate(
         feedings_count=Count("feedings", filter=active_feedings),
         total_amount=Coalesce(
@@ -146,7 +154,7 @@ def statistics(request):
         ),
         "by_date": (
             Feeding.objects
-            .filter(ACTIVE)
+            .active()
             .values("feeding_date")
             .annotate(feedings_count=Count("id"), total_amount=Sum("amount"))
             .order_by("feeding_date")
