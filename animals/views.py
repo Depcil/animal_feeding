@@ -2,7 +2,7 @@ from datetime import date
 
 from django.db.models import F, Q, Sum
 from django.db.models.functions import Coalesce
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from feedings.models import ACTIVE_STATUSES
 
@@ -56,8 +56,16 @@ def animals(request):
     )
 
 
-def animal_detail(request, animal_id):
+def animal_by_id(request, animal_id):
     animal = get_object_or_404(Animal, pk=animal_id)
+    url = animal.get_absolute_url()
+    if request.GET:
+        url += "?" + request.GET.urlencode()
+    return redirect(url, permanent=True)
+
+
+def animal_detail(request, slug):
+    animal = get_object_or_404(Animal, slug=slug)
     feeding_date = _parse_date(request.GET.get("date")) or date.today()
 
     day_feedings = (

@@ -11,7 +11,7 @@
 
             <p class="card-text">
                 <strong>Животное:</strong>
-                <a href="{% url 'animals:detail' feeding.animal_id %}?date={{ feeding.feeding_date|date:'Y-m-d' }}">
+                <a href="{{ feeding.animal.get_absolute_url }}?date={{ feeding.feeding_date|date:'Y-m-d' }}">
                     {{ feeding.animal.name }}
                 </a>
                 (норма {{ feeding.animal.daily_norm }} г/сутки)

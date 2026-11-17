@@ -90,7 +90,9 @@ def test_available_animals_by_date(client):
 
 
 def test_animal_detail_by_date(client):
-    text = client.get("/animals/1/", {"date": "2026-10-07"}).content.decode()
+    text = client.get(
+        "/animals/barsik-1/", {"date": "2026-10-07"}
+    ).content.decode()
     assert "получил:</strong> 200 г" in text
     assert "норма выполнена" in text
 
@@ -146,3 +148,32 @@ def test_statistics_page(client):
         "/feedings/statistics/", {"min_count": "3"}
     ).content.decode()
     assert "Рекс – 3" in strict and "Барсик – 2" not in strict
+
+
+def test_slug_and_absolute_url():
+    animal = Animal.objects.create(
+        name="Тузик Младший", species="собака", daily_norm=300,
+    )
+    assert animal.slug == f"tuzik-mladshii-{animal.pk}"
+    assert animal.get_absolute_url() == f"/animals/{animal.slug}/"
+    # При переименовании адрес не меняется.
+    animal.name = "Тузик"
+    animal.save()
+    animal.refresh_from_db()
+    assert animal.slug == f"tuzik-mladshii-{animal.pk}"
+
+
+def test_old_id_url_redirects_to_slug(client):
+    response = client.get("/animals/2/", {"date": "2026-10-08"})
+    assert response.status_code == 301
+    assert response["Location"] == "/animals/reks-2/?date=2026-10-08"
+
+
+def test_generated_large_norm():
+    large = Animal.objects.filter(is_large_norm=True)
+    assert list(large.values_list("name", flat=True)) == ["Рекс"]
+    murka = Animal.objects.get(name="Мурка")
+    murka.daily_norm = 500
+    murka.save()
+    murka.refresh_from_db()
+    assert murka.is_large_norm is True

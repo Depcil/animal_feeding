@@ -22,11 +22,19 @@ class AnimalFeedingInline(admin.TabularInline):
 
 @admin.register(Animal)
 class AnimalAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "species", "daily_norm", "feedings_count")
+    list_display = (
+        "id",
+        "name",
+        "species",
+        "daily_norm",
+        "is_large_norm",
+        "feedings_count",
+    )
     list_display_links = ("name",)
     list_editable = ("daily_norm",)
     search_fields = ("name", "species")
-    list_filter = ("species",)
+    list_filter = ("species", "is_large_norm")
+    readonly_fields = ("slug", "is_large_norm")
     ordering = ("name",)
     list_per_page = 20
     inlines = [AnimalFeedingInline]

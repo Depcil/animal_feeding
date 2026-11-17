@@ -35,7 +35,7 @@
             <article class="card room-card mb-3">
                 <div class="card-body">
                     <h3 class="card-title h5">
-                        <a href="{% url 'animals:detail' animal.id %}?date={{ feeding_date|date:'Y-m-d' }}">
+                        <a href="{{ animal.get_absolute_url }}?date={{ feeding_date|date:'Y-m-d' }}">
                             {{ animal.name }}
                         </a>
                         ({{ animal.species }})

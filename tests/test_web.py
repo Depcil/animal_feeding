@@ -32,7 +32,7 @@ def test_animals_list_filter_length_and_cards(client):
     assert response.status_code == 200
     assert "animals/includes/animal_card.html" in template_names(response)
     assert "Всего животных: 4" in text
-    assert 'href="/animals/1/"' in text
+    assert 'href="/animals/barsik-1/"' in text
 
 
 def test_empty_animals_list():
@@ -45,18 +45,21 @@ def test_default_filter_for_empty_name():
     from animals.models import Animal
     text = render_to_string(
         "animals/includes/animal_card.html",
-        {"animal": Animal(pk=7, name="", species="кот", daily_norm=100)},
+        {"animal": Animal(
+            pk=7, name="", species="кот", daily_norm=100, slug="animal-7",
+        )},
     )
     assert "Без клички" in text
 
 
 def test_animal_detail_and_404(client):
-    ok = client.get("/animals/1/")
+    ok = client.get("/animals/barsik-1/")
     assert ok.status_code == 200
     assert "Суточная норма" in ok.content.decode()
-    missing = client.get("/animals/9999/")
-    assert missing.status_code == 404
-    assert "404.html" in template_names(missing)
+    for url in ("/animals/9999/", "/animals/no-such-animal/"):
+        missing = client.get(url)
+        assert missing.status_code == 404
+        assert "404.html" in template_names(missing)
 
 
 def test_feedings_list_status_include(client):
@@ -74,6 +77,12 @@ def test_feeding_detail_related_objects_and_404(client):
     assert "Барсик" in text and "Анна Смирнова" in text
     missing = client.get("/feedings/9999/")
     assert missing.status_code == 404
+
+
+def test_context_processor_in_footer(client):
+    for url in ("/", "/feedings/", "/animals/available/"):
+        text = client.get(url).content.decode()
+        assert "животных в базе: 4" in text
 
 
 def test_static_files_connected(client):

@@ -18,6 +18,9 @@
             <p class="card-text">
                 <strong>Суточная норма:</strong>
                 {{ animal.daily_norm }} г
+                {% if animal.is_large_norm %}
+                    <span class="badge bg-info text-dark">большая норма</span>
+                {% endif %}
             </p>
 
             <form method="get" class="d-flex gap-2 align-items-end mb-3">

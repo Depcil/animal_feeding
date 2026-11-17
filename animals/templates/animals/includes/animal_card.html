@@ -7,10 +7,13 @@
         <p class="card-text">
             Вид: {{ animal.species }}.
             Суточная норма: {{ animal.daily_norm }} г
+            {% if animal.is_large_norm %}
+                <span class="badge bg-info text-dark">большая норма</span>
+            {% endif %}
         </p>
 
         <a
-            href="{% url 'animals:detail' animal.id %}"
+            href="{{ animal.get_absolute_url }}"
             class="btn btn-primary"
         >
             Подробнее
