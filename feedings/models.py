@@ -30,6 +30,7 @@ class Feeding(models.Model):
     amount = models.PositiveIntegerField(
         validators=[MinValueValidator(1)],
         verbose_name="Порция, г",
+        help_text="Вместе с другими кормлениями за день не больше нормы.",
     )
     is_cancelled = models.BooleanField(
         default=False,

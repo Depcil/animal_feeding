@@ -15,6 +15,7 @@ class Animal(models.Model):
     daily_norm = models.PositiveIntegerField(
         validators=[MinValueValidator(1)],
         verbose_name="Суточная норма, г",
+        help_text="Сколько граммов корма животное может получить за сутки.",
     )
 
     class Meta:
