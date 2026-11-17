@@ -47,6 +47,11 @@
                 {% endif %}
             </p>
 
+            <p>
+                <a href="{% url 'feedings:create' %}?animal={{ animal.id }}"
+                   class="btn btn-success btn-sm">Запланировать кормление</a>
+            </p>
+
             <h2 class="h5">Кормления за {{ feeding_date|date:"d.m.Y" }}</h2>
             <ul class="list-group">
                 {% for feeding in day_feedings %}

@@ -1,12 +1,14 @@
+from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Avg, Count, Max, Min, Q, Sum
 from django.db.models.functions import Coalesce
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from animals.models import Animal
 from employees.models import Employee
 
-from .forms import FeedingFilterForm
+from .forms import FeedingFilterForm, FeedingForm
 from .models import ACTIVE_STATUSES, Feeding
 
 PAGE_SIZE = 5
@@ -88,6 +90,76 @@ def feeding_detail(request, feeding_id):
         "feedings/feeding_detail.html",
         {"feeding": feeding},
     )
+
+
+def feeding_create(request):
+    initial = {}
+    # Со страницы животного можно перейти к форме с выбранным животным.
+    if request.GET.get("animal", "").isdigit():
+        initial["animal"] = request.GET["animal"]
+
+    form = FeedingForm(request.POST or None, initial=initial)
+    if form.is_valid():
+        feeding = form.save()
+        messages.success(request, f"Кормление №{feeding.pk} запланировано.")
+        return redirect("feedings:detail", feeding_id=feeding.pk)
+
+    return render(
+        request,
+        "feedings/feeding_form.html",
+        {"form": form},
+    )
+
+
+def feeding_update(request, feeding_id):
+    feeding = get_object_or_404(Feeding, pk=feeding_id)
+    # Выполненное или отмененное кормление – уже история, его не правят.
+    if feeding.status != Feeding.Status.PLANNED:
+        messages.error(
+            request,
+            "Изменить можно только запланированное кормление.",
+        )
+        return redirect("feedings:detail", feeding_id=feeding.pk)
+
+    form = FeedingForm(request.POST or None, instance=feeding)
+    if form.is_valid():
+        form.save()
+        messages.success(request, "Изменения сохранены.")
+        return redirect("feedings:detail", feeding_id=feeding.pk)
+
+    return render(
+        request,
+        "feedings/feeding_form.html",
+        {"form": form, "feeding": feeding},
+    )
+
+
+@require_POST
+def feeding_cancel(request, feeding_id):
+    feeding = get_object_or_404(Feeding, pk=feeding_id)
+    if feeding.status == Feeding.Status.CANCELLED:
+        messages.info(request, "Кормление уже отменено.")
+    else:
+        feeding.cancel()
+        messages.success(
+            request,
+            "Кормление отменено, порция больше не входит в норму.",
+        )
+    return redirect("feedings:detail", feeding_id=feeding.pk)
+
+
+@require_POST
+def feeding_done(request, feeding_id):
+    feeding = get_object_or_404(Feeding, pk=feeding_id)
+    if feeding.status == Feeding.Status.PLANNED:
+        feeding.mark_done()
+        messages.success(request, "Кормление отмечено как выполненное.")
+    else:
+        messages.error(
+            request,
+            "Выполненным можно отметить только запланированное кормление.",
+        )
+    return redirect("feedings:detail", feeding_id=feeding.pk)
 
 
 def statistics(request):

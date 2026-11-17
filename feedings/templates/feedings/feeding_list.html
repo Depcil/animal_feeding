@@ -7,6 +7,12 @@
 {% block content %}
     <h1>Кормления</h1>
 
+    <p>
+        <a href="{% url 'feedings:create' %}" class="btn btn-success">
+            Запланировать кормление
+        </a>
+    </p>
+
     <form method="get" class="row g-2 mb-3 align-items-end feeding-filter" novalidate>
         {% for field in form %}
             <div class="col-sm-2">
@@ -40,13 +46,25 @@
 
     <ul class="list-group">
         {% for feeding in feedings %}
-            <li class="list-group-item d-flex justify-content-between">
+            <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
                 <a href="{% url 'feedings:detail' feeding.id %}">
                     №{{ feeding.id }}: {{ feeding.animal.name }} –
                     {{ feeding.feeding_date|date:"d.m.Y" }},
                     {{ feeding.amount }} г ({{ feeding.employee.name }})
                 </a>
-                {% include "feedings/includes/feeding_status.html" %}
+                <span class="d-flex gap-2 align-items-center">
+                    {% if feeding.status == "planned" %}
+                        <a href="{% url 'feedings:update' feeding.id %}"
+                           class="btn btn-sm btn-outline-primary">Изменить</a>
+                        <form method="post" action="{% url 'feedings:cancel' feeding.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                Отменить
+                            </button>
+                        </form>
+                    {% endif %}
+                    {% include "feedings/includes/feeding_status.html" %}
+                </span>
             </li>
         {% empty %}
             <li class="list-group-item">Кормления не найдены.</li>

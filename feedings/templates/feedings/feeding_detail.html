@@ -36,6 +36,27 @@
                     <strong>Комментарий:</strong> {{ feeding.comment }}
                 </p>
             {% endif %}
+
+            <div class="d-flex gap-2">
+                {% if feeding.status == "planned" %}
+                    <a href="{% url 'feedings:update' feeding.id %}"
+                       class="btn btn-outline-primary">Изменить</a>
+                    <form method="post" action="{% url 'feedings:done' feeding.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">
+                            Отметить выполненным
+                        </button>
+                    </form>
+                {% endif %}
+                {% if feeding.status != "cancelled" %}
+                    <form method="post" action="{% url 'feedings:cancel' feeding.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger">
+                            Отменить кормление
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
         </div>
     </div>
 
