@@ -9,6 +9,17 @@
         <div class="card-body">
             <h1 class="card-title">{{ animal.name }}</h1>
 
+            {% if animal.photo %}
+                <img src="{{ animal.photo.url }}" alt="{{ animal.name }}"
+                     class="animal-photo mb-3">
+            {% endif %}
+            <p>
+                <a href="{% url 'animals:photo' animal.slug %}"
+                   class="btn btn-outline-secondary btn-sm">
+                    {% if animal.photo %}Заменить фото{% else %}Загрузить фото{% endif %}
+                </a>
+            </p>
+
             <p class="card-text">
                 <strong>ID:</strong> {{ animal.id }}
             </p>

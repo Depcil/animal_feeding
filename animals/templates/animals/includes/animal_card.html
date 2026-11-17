@@ -1,5 +1,9 @@
 <article class="card room-card mb-3">
     <div class="card-body">
+        {% if animal.photo %}
+            <img src="{{ animal.photo.url }}" alt="{{ animal.name }}"
+                 class="animal-thumb float-end">
+        {% endif %}
         <h2 class="card-title">
             {{ animal.name|default:"Без клички" }}
         </h2>

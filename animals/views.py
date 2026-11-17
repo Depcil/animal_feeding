@@ -1,11 +1,13 @@
 from datetime import date
 
+from django.contrib import messages
 from django.db.models import F, Q, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
 
 from feedings.models import ACTIVE_STATUSES
 
+from .forms import AnimalPhotoForm
 from .models import Animal
 
 # Допустимые значения параметра sort -> поля сортировки.
@@ -88,6 +90,26 @@ def animal_detail(request, slug):
         request,
         "animals/animal_detail.html",
         context,
+    )
+
+
+def animal_photo(request, slug):
+    animal = get_object_or_404(Animal, slug=slug)
+    # Файлы приходят не в request.POST, а в request.FILES.
+    form = AnimalPhotoForm(
+        request.POST or None,
+        request.FILES or None,
+        instance=animal,
+    )
+    if form.is_valid():
+        form.save()
+        messages.success(request, "Фото сохранено.")
+        return redirect(animal)
+
+    return render(
+        request,
+        "animals/animal_photo.html",
+        {"form": form, "animal": animal},
     )
 
 

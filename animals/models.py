@@ -35,6 +35,11 @@ class Animal(models.Model):
         db_persist=True,
         verbose_name="Большая норма",
     )
+    photo = models.ImageField(
+        upload_to="animals/",
+        blank=True,
+        verbose_name="Фото",
+    )
     slug = models.SlugField(
         max_length=120,
         unique=True,

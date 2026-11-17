@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Фото: {{ animal.name }} – PetFeed
+{% endblock %}
+
+{% block content %}
+    <h1>Фото: {{ animal.name }}</h1>
+
+    {% if animal.photo %}
+        <img src="{{ animal.photo.url }}" alt="{{ animal.name }}"
+             class="animal-photo mb-3">
+    {% endif %}
+
+    <!-- Без enctype браузер не передаст файл на сервер. -->
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                <div class="form-text">{{ field.help_text }}</div>
+                {% for error in field.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <a href="{{ animal.get_absolute_url }}"
+           class="btn btn-outline-secondary">Отмена</a>
+    </form>
+{% endblock %}
