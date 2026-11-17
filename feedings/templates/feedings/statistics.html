@@ -29,7 +29,7 @@
     <p>
         Суточные нормы {{ norms.animals_count }} животных:
         от {{ norms.min_norm }} до {{ norms.max_norm }} г,
-        в среднем {{ norms.avg_norm }} г.
+        в среднем {{ norms.avg_norm|floatformat:1 }} г.
     </p>
 
     <h2 class="h4">По животным</h2>
@@ -38,7 +38,7 @@
         <tbody>
         {% for item in by_animal %}
             <tr class="statistics-item">
-                <td>{{ item.animal_name }}</td>
+                <td>{{ item.name }}</td>
                 <td>{{ item.feedings_count }}</td>
                 <td>{{ item.total_amount }}</td>
             </tr>
@@ -52,9 +52,9 @@
     <table class="table table-sm">
         <thead><tr><th>Сотрудник</th><th>Кормлений</th><th>Корм, г</th></tr></thead>
         <tbody>
-        {% for item in by_user %}
+        {% for item in by_employee %}
             <tr>
-                <td>{{ item.user_name }}</td>
+                <td>{{ item.name }}</td>
                 <td>{{ item.feedings_count }}</td>
                 <td>{{ item.total_amount }}</td>
             </tr>
@@ -70,7 +70,7 @@
         <tbody>
         {% for item in by_date %}
             <tr>
-                <td>{{ item.feeding_date }}</td>
+                <td>{{ item.feeding_date|date:"d.m.Y" }}</td>
                 <td>{{ item.feedings_count }}</td>
                 <td>{{ item.total_amount }}</td>
             </tr>
@@ -100,7 +100,7 @@
     </form>
     <ul>
         {% for item in frequent %}
-            <li>{{ item.animal_name }} – {{ item.feedings_count }}</li>
+            <li>{{ item.name }} – {{ item.feedings_count }}</li>
         {% empty %}
             <li>Таких животных нет.</li>
         {% endfor %}

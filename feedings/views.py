@@ -1,161 +1,25 @@
-import sqlite3
+from datetime import date
 
-from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.db.models import Avg, Count, Max, Min, Q, Sum
+from django.db.models.functions import Coalesce
+from django.shortcuts import get_object_or_404, render
 
-from db.database import get_connection
+from animals.models import Animal
+from employees.models import Employee
+
+from .models import Feeding
 
 PAGE_SIZE = 5
 
-STATUS_FILTERS = {
-    "all": (0, 1),
-    "active": (0, 0),
-    "cancelled": (1, 1),
+SORT_FIELDS = {
+    "date": ["-feeding_date", "-pk"],
+    "animal": ["animal__name", "-feeding_date"],
+    "employee": ["employee__name", "-feeding_date"],
+    "amount": ["-amount", "-feeding_date"],
 }
 
-FEEDINGS_SQL = """
-    SELECT
-        feedings.id,
-        feedings.feeding_date,
-        animals.name AS animal_name,
-        users.name AS user_name,
-        feedings.food,
-        feedings.amount,
-        feedings.is_cancelled
-    FROM feedings
-    JOIN animals
-        ON feedings.animal_id = animals.id
-    JOIN users
-        ON feedings.user_id = users.id
-    WHERE feedings.is_cancelled BETWEEN ? AND ?
-    ORDER BY feedings.feeding_date DESC, feedings.id DESC
-    LIMIT ? OFFSET ?;
-"""
-
-FEEDINGS_COUNT_SQL = """
-    SELECT
-        COUNT(*) AS feedings_count
-    FROM feedings
-    WHERE is_cancelled BETWEEN ? AND ?;
-"""
-
-FEEDING_SQL = """
-    SELECT
-        feedings.id,
-        feedings.feeding_date,
-        feedings.food,
-        feedings.amount,
-        feedings.is_cancelled,
-        feedings.comment,
-        animals.id AS animal_id,
-        animals.name AS animal_name,
-        animals.daily_norm,
-        users.name AS user_name,
-        users.email AS user_email
-    FROM feedings
-    JOIN animals
-        ON feedings.animal_id = animals.id
-    JOIN users
-        ON feedings.user_id = users.id
-    WHERE feedings.id = ?;
-"""
-
-SUMMARY_SQL = """
-    SELECT
-        COUNT(*) AS total_count,
-        COALESCE(SUM(CASE WHEN is_cancelled = 0 THEN 1 ELSE 0 END), 0)
-            AS active_count,
-        COALESCE(SUM(is_cancelled), 0) AS cancelled_count,
-        COALESCE(SUM(CASE WHEN is_cancelled = 0 THEN amount END), 0)
-            AS total_amount
-    FROM feedings;
-"""
-
-NORMS_SQL = """
-    SELECT
-        COUNT(*) AS animals_count,
-        MIN(daily_norm) AS min_norm,
-        MAX(daily_norm) AS max_norm,
-        ROUND(AVG(daily_norm), 1) AS avg_norm
-    FROM animals;
-"""
-
-BY_ANIMAL_SQL = """
-    SELECT
-        animals.name AS animal_name,
-        COUNT(feedings.id) AS feedings_count,
-        COALESCE(SUM(feedings.amount), 0) AS total_amount
-    FROM animals
-    LEFT JOIN feedings
-        ON animals.id = feedings.animal_id
-       AND feedings.is_cancelled = 0
-    GROUP BY animals.id, animals.name
-    ORDER BY feedings_count DESC, animals.name;
-"""
-
-BY_USER_SQL = """
-    SELECT
-        users.name AS user_name,
-        COUNT(feedings.id) AS feedings_count,
-        COALESCE(SUM(feedings.amount), 0) AS total_amount
-    FROM users
-    LEFT JOIN feedings
-        ON users.id = feedings.user_id
-       AND feedings.is_cancelled = 0
-    GROUP BY users.id, users.name
-    ORDER BY feedings_count DESC, users.name;
-"""
-
-BY_SPECIES_SQL = """
-    SELECT
-        species,
-        COUNT(*) AS animals_count
-    FROM animals
-    GROUP BY species
-    ORDER BY animals_count DESC, species;
-"""
-
-FREQUENT_SQL = """
-    SELECT
-        animals.name AS animal_name,
-        COUNT(feedings.id) AS feedings_count
-    FROM animals
-    JOIN feedings
-        ON animals.id = feedings.animal_id
-    WHERE feedings.is_cancelled = 0
-    GROUP BY animals.id, animals.name
-    HAVING COUNT(feedings.id) >= ?
-    ORDER BY feedings_count DESC, animals.name;
-"""
-
-BY_DATE_SQL = """
-    SELECT
-        feeding_date,
-        COUNT(*) AS feedings_count,
-        SUM(amount) AS total_amount
-    FROM feedings
-    WHERE is_cancelled = 0
-    GROUP BY feeding_date
-    ORDER BY feeding_date;
-"""
-
-
-def _fetch_all(sql, params=()):
-    """Выполнить SELECT и вернуть строки sqlite3.Row (доступ по именам)."""
-    conn = get_connection()
-    conn.row_factory = sqlite3.Row
-    try:
-        return conn.execute(sql, params).fetchall()
-    finally:
-        conn.close()
-
-
-def _fetch_one(sql, params=()):
-    conn = get_connection()
-    conn.row_factory = sqlite3.Row
-    try:
-        return conn.execute(sql, params).fetchone()
-    finally:
-        conn.close()
+ACTIVE = Q(is_cancelled=False)
 
 
 def _positive_int(value, default):
@@ -165,26 +29,56 @@ def _positive_int(value, default):
 
 def feedings(request):
     status = request.GET.get("status", "all")
-    if status not in STATUS_FILTERS:
-        status = "all"
-    low, high = STATUS_FILTERS[status]
+    raw_date = request.GET.get("date", "")
+    animal_id = request.GET.get("animal", "")
+    employee_id = request.GET.get("employee", "")
+    sort = request.GET.get("sort", "date")
+    if sort not in SORT_FIELDS:
+        sort = "date"
+    error = None
 
-    total = _fetch_one(FEEDINGS_COUNT_SQL, [low, high])["feedings_count"]
-    pages = max((total + PAGE_SIZE - 1) // PAGE_SIZE, 1)
-    page = min(_positive_int(request.GET.get("page"), 1), pages)
-    offset = (page - 1) * PAGE_SIZE
+    # select_related: животное и сотрудник приходят одним запросом с JOIN,
+    # без отдельного обращения к базе для каждой строки списка.
+    feedings_list = Feeding.objects.select_related("animal", "employee")
+
+    if status == "active":
+        feedings_list = feedings_list.exclude(is_cancelled=True)
+    elif status == "cancelled":
+        feedings_list = feedings_list.filter(is_cancelled=True)
+    else:
+        status = "all"
+
+    if raw_date:
+        try:
+            feedings_list = feedings_list.filter(
+                feeding_date=date.fromisoformat(raw_date),
+            )
+        except ValueError:
+            error = "Дата указана неверно, используйте формат ГГГГ-ММ-ДД."
+    if animal_id.isdigit():
+        feedings_list = feedings_list.filter(animal_id=int(animal_id))
+    if employee_id.isdigit():
+        feedings_list = feedings_list.filter(employee_id=int(employee_id))
+
+    feedings_list = feedings_list.order_by(*SORT_FIELDS[sort])
+
+    # get_page() сам обрабатывает page=abc и номер больше последнего.
+    page_obj = Paginator(feedings_list, PAGE_SIZE).get_page(
+        request.GET.get("page"),
+    )
 
     context = {
-        "feedings": _fetch_all(
-            FEEDINGS_SQL,
-            [low, high, PAGE_SIZE, offset],
-        ),
-        "total": total,
+        "page_obj": page_obj,
+        "feedings": page_obj.object_list,
+        "total": page_obj.paginator.count,
         "status": status,
-        "page": page,
-        "pages": pages,
-        "prev_page": page - 1 if page > 1 else None,
-        "next_page": page + 1 if page < pages else None,
+        "selected_date": raw_date,
+        "selected_animal": animal_id,
+        "selected_employee": employee_id,
+        "sort": sort,
+        "animals": Animal.objects.order_by("name"),
+        "employees": Employee.objects.order_by("name"),
+        "error": error,
     }
 
     return render(
@@ -195,31 +89,69 @@ def feedings(request):
 
 
 def feeding_detail(request, feeding_id):
-    feeding = _fetch_one(FEEDING_SQL, [feeding_id])
-
-    context = {
-        "feeding": feeding,
-    }
+    feeding = get_object_or_404(
+        Feeding.objects.select_related("animal", "employee"),
+        pk=feeding_id,
+    )
 
     return render(
         request,
         "feedings/feeding_detail.html",
-        context,
-        status=404 if feeding is None else 200,
+        {"feeding": feeding},
     )
 
 
 def statistics(request):
     min_count = _positive_int(request.GET.get("min_count"), 2)
 
+    summary = Feeding.objects.aggregate(
+        total_count=Count("id"),
+        active_count=Count("id", filter=ACTIVE),
+        cancelled_count=Count("id", filter=Q(is_cancelled=True)),
+        total_amount=Coalesce(Sum("amount", filter=ACTIVE), 0),
+    )
+    norms = Animal.objects.aggregate(
+        animals_count=Count("id"),
+        min_norm=Min("daily_norm"),
+        max_norm=Max("daily_norm"),
+        avg_norm=Avg("daily_norm"),
+    )
+
+    # Условие в filter= внутри агрегата сохраняет в списке животных
+    # и сотрудников без активных кормлений (у них 0).
+    active_feedings = Q(feedings__is_cancelled=False)
+    by_animal = Animal.objects.annotate(
+        feedings_count=Count("feedings", filter=active_feedings),
+        total_amount=Coalesce(
+            Sum("feedings__amount", filter=active_feedings), 0,
+        ),
+    ).order_by("-feedings_count", "name")
+    by_employee = Employee.objects.annotate(
+        feedings_count=Count("feedings", filter=active_feedings),
+        total_amount=Coalesce(
+            Sum("feedings__amount", filter=active_feedings), 0,
+        ),
+    ).order_by("-feedings_count", "name")
+
     context = {
-        "summary": _fetch_one(SUMMARY_SQL),
-        "norms": _fetch_one(NORMS_SQL),
-        "by_animal": _fetch_all(BY_ANIMAL_SQL),
-        "by_user": _fetch_all(BY_USER_SQL),
-        "by_species": _fetch_all(BY_SPECIES_SQL),
-        "by_date": _fetch_all(BY_DATE_SQL),
-        "frequent": _fetch_all(FREQUENT_SQL, [min_count]),
+        "summary": summary,
+        "norms": norms,
+        "by_animal": by_animal,
+        "by_employee": by_employee,
+        "by_species": (
+            Animal.objects
+            .values("species")
+            .annotate(animals_count=Count("id"))
+            .order_by("-animals_count", "species")
+        ),
+        "by_date": (
+            Feeding.objects
+            .filter(ACTIVE)
+            .values("feeding_date")
+            .annotate(feedings_count=Count("id"), total_amount=Sum("amount"))
+            .order_by("feeding_date")
+        ),
+        "frequent": by_animal.filter(feedings_count__gte=min_count),
         "min_count": min_count,
     }
 

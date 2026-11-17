@@ -1,76 +1,67 @@
 {% extends "base.html" %}
 
 {% block title %}
-    {% if animal %}
-        {{ animal.name }} – PetFeed
-    {% else %}
-        Животное не найдено – PetFeed
-    {% endif %}
+    {{ animal.name }} – PetFeed
 {% endblock %}
 
 {% block content %}
-    {% if animal %}
-        <div class="card">
-            <div class="card-body">
-                <h1 class="card-title">{{ animal.name }}</h1>
+    <div class="card">
+        <div class="card-body">
+            <h1 class="card-title">{{ animal.name }}</h1>
 
-                <p class="card-text">
-                    <strong>ID:</strong> {{ animal.id }}
-                </p>
-                <p class="card-text">
-                    <strong>Вид:</strong> {{ animal.species }}
-                </p>
-                <p class="card-text">
-                    <strong>Суточная норма:</strong>
-                    {{ animal.daily_norm }} г
-                </p>
+            <p class="card-text">
+                <strong>ID:</strong> {{ animal.id }}
+            </p>
+            <p class="card-text">
+                <strong>Вид:</strong> {{ animal.species }}
+            </p>
+            <p class="card-text">
+                <strong>Суточная норма:</strong>
+                {{ animal.daily_norm }} г
+            </p>
 
-                <form method="get" class="d-flex gap-2 align-items-end mb-3">
-                    <div>
-                        <label for="date" class="form-label">Дата</label>
-                        <input type="date" id="date" name="date"
-                               value="{{ feeding_date }}" class="form-control">
-                    </div>
-                    <button type="submit" class="btn btn-outline-primary">
-                        Показать
-                    </button>
-                </form>
+            <form method="get" class="d-flex gap-2 align-items-end mb-3">
+                <div>
+                    <label for="date" class="form-label">Дата</label>
+                    <input type="date" id="date" name="date"
+                           value="{{ feeding_date|date:'Y-m-d' }}" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-outline-primary">
+                    Показать
+                </button>
+            </form>
 
-                <p class="card-text">
-                    <strong>{{ feeding_date }} получил:</strong> {{ fed }} г,
-                    остаток нормы: {{ remaining }} г
-                </p>
-                <p class="card-text">
-                    Кормление на выбранную дату:
-                    {% if remaining > 0 %}
-                        <span class="badge bg-success">можно кормить</span>
-                    {% else %}
-                        <span class="badge bg-danger">норма выполнена</span>
-                    {% endif %}
-                </p>
+            <p class="card-text">
+                <strong>{{ feeding_date|date:"d.m.Y" }} получил:</strong> {{ fed }} г,
+                остаток нормы: {{ remaining }} г
+            </p>
+            <p class="card-text">
+                Кормление на выбранную дату:
+                {% if remaining > 0 %}
+                    <span class="badge bg-success">можно кормить</span>
+                {% else %}
+                    <span class="badge bg-danger">норма выполнена</span>
+                {% endif %}
+            </p>
 
-                <h2 class="h5">Кормления за {{ feeding_date }}</h2>
-                <ul class="list-group">
-                    {% for feeding in day_feedings %}
-                        <li class="list-group-item d-flex justify-content-between">
-                            <a href="{% url 'feedings:detail' feeding.id %}">
-                                №{{ feeding.id }}: {{ feeding.food }},
-                                {{ feeding.amount }} г ({{ feeding.user_name }})
-                            </a>
-                            {% include "feedings/includes/feeding_status.html" %}
-                        </li>
-                    {% empty %}
-                        <li class="list-group-item">
-                            За эту дату кормлений нет.
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+            <h2 class="h5">Кормления за {{ feeding_date|date:"d.m.Y" }}</h2>
+            <ul class="list-group">
+                {% for feeding in day_feedings %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <a href="{% url 'feedings:detail' feeding.id %}">
+                            №{{ feeding.id }}: {{ feeding.food }},
+                            {{ feeding.amount }} г ({{ feeding.employee.name }})
+                        </a>
+                        {% include "feedings/includes/feeding_status.html" %}
+                    </li>
+                {% empty %}
+                    <li class="list-group-item">
+                        За эту дату кормлений нет.
+                    </li>
+                {% endfor %}
+            </ul>
         </div>
-    {% else %}
-        <h1 class="text-danger">Животное не найдено</h1>
-        <p>Животное с указанным идентификатором отсутствует.</p>
-    {% endif %}
+    </div>
 
     <a
         href="{% url 'animals:list' %}"

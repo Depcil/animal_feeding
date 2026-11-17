@@ -1,14 +1,15 @@
+import pytest
 from django.template.loader import render_to_string
-from django.test import Client, override_settings
+from django.test import override_settings
 
-client = Client()
+pytestmark = pytest.mark.django_db
 
 
 def template_names(response):
     return [t.name for t in response.templates if t.name]
 
 
-def test_homepage_uses_base_template():
+def test_homepage_uses_base_template(client):
     response = client.get("/")
     text = response.content.decode()
     assert response.status_code == 200
@@ -18,13 +19,14 @@ def test_homepage_uses_base_template():
     assert "<title>\n    Главная – PetFeed" in text.replace("\r", "")
 
 
-def test_navigation_links_built_by_url_names():
+def test_navigation_links_built_by_url_names(client):
     text = client.get("/").content.decode()
     assert 'href="/animals/"' in text
     assert 'href="/feedings/"' in text
+    assert 'href="/feedings/statistics/"' in text
 
 
-def test_animals_list_filter_length_and_cards():
+def test_animals_list_filter_length_and_cards(client):
     response = client.get("/animals/")
     text = response.content.decode()
     assert response.status_code == 200
@@ -40,24 +42,24 @@ def test_empty_animals_list():
 
 
 def test_default_filter_for_empty_name():
-    from models import Animal
+    from animals.models import Animal
     text = render_to_string(
         "animals/includes/animal_card.html",
-        {"animal": Animal(7, "", "кот", 100)},
+        {"animal": Animal(pk=7, name="", species="кот", daily_norm=100)},
     )
     assert "Без клички" in text
 
 
-def test_animal_detail_and_404():
+def test_animal_detail_and_404(client):
     ok = client.get("/animals/1/")
     assert ok.status_code == 200
     assert "Суточная норма" in ok.content.decode()
     missing = client.get("/animals/9999/")
     assert missing.status_code == 404
-    assert "Животное не найдено" in missing.content.decode()
+    assert "404.html" in template_names(missing)
 
 
-def test_feedings_list_status_include():
+def test_feedings_list_status_include(client):
     response = client.get("/feedings/")
     text = response.content.decode()
     assert response.status_code == 200
@@ -65,17 +67,16 @@ def test_feedings_list_status_include():
     assert "Активно" in text and "Отменено" in text
 
 
-def test_feeding_detail_related_objects_and_404():
+def test_feeding_detail_related_objects_and_404(client):
     ok = client.get("/feedings/1/")
     text = ok.content.decode()
     assert ok.status_code == 200
     assert "Барсик" in text and "Анна Смирнова" in text
     missing = client.get("/feedings/9999/")
     assert missing.status_code == 404
-    assert "Кормление не найдено" in missing.content.decode()
 
 
-def test_static_files_connected():
+def test_static_files_connected(client):
     text = client.get("/").content.decode()
     assert "/static/homepage/css/style.css" in text
     assert "/static/homepage/js/main.js" in text
@@ -83,7 +84,7 @@ def test_static_files_connected():
 
 
 @override_settings(DEBUG=False, ALLOWED_HOSTS=["testserver"])
-def test_custom_404_template():
+def test_custom_404_template(client):
     response = client.get("/nonexistent/")
     assert response.status_code == 404
     assert "404.html" in template_names(response)

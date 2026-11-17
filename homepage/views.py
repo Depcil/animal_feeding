@@ -1,29 +1,25 @@
-import sqlite3
-
 from django.shortcuts import render
 
-from db.database import get_connection
-
-COUNTS_SQL = """
-    SELECT
-        (SELECT COUNT(*) FROM animals) AS animals_count,
-        (SELECT COUNT(*) FROM feedings WHERE is_cancelled = 0)
-            AS active_feedings;
-"""
+from animals.models import Animal
+from feedings.models import Feeding
 
 
 def index(request):
-    conn = get_connection()
-    conn.row_factory = sqlite3.Row
-    try:
-        counts = conn.execute(COUNTS_SQL).fetchone()
-    finally:
-        conn.close()
+    counts = {
+        "animals_count": Animal.objects.count(),
+        "active_feedings": Feeding.objects.filter(is_cancelled=False).count(),
+    }
+    # Пять последних активных кормлений для блока на главной странице.
+    latest = (
+        Feeding.objects
+        .exclude(is_cancelled=True)
+        .select_related("animal")[:5]
+    )
 
     return render(
         request,
         "homepage/index.html",
-        {"counts": counts},
+        {"counts": counts, "latest": latest},
     )
 
 

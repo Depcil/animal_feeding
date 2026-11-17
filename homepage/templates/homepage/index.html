@@ -18,6 +18,19 @@
         Животных в базе: {{ counts.animals_count }},
         активных кормлений: {{ counts.active_feedings }}.
     </p>
+    {% if latest %}
+        <h2 class="h5">Последние кормления</h2>
+        <ul>
+            {% for feeding in latest %}
+                <li>
+                    <a href="{% url 'feedings:detail' feeding.id %}">
+                        {{ feeding.feeding_date|date:"d.m.Y" }} –
+                        {{ feeding.animal.name }}, {{ feeding.amount }} г
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
     <p>Основные разделы:</p>
     <a href="{% url 'animals:list' %}" class="btn btn-primary me-2">
         Животные

@@ -1,52 +1,43 @@
 {% extends "base.html" %}
 
 {% block title %}
-    {% if feeding %}
-        Кормление №{{ feeding.id }} – PetFeed
-    {% else %}
-        Кормление не найдено – PetFeed
-    {% endif %}
+    Кормление №{{ feeding.id }} – PetFeed
 {% endblock %}
 
 {% block content %}
-    {% if feeding %}
-        <div class="card">
-            <div class="card-body">
-                <h1 class="card-title">Кормление №{{ feeding.id }}</h1>
+    <div class="card">
+        <div class="card-body">
+            <h1 class="card-title">Кормление №{{ feeding.id }}</h1>
 
+            <p class="card-text">
+                <strong>Животное:</strong>
+                <a href="{% url 'animals:detail' feeding.animal_id %}?date={{ feeding.feeding_date|date:'Y-m-d' }}">
+                    {{ feeding.animal.name }}
+                </a>
+                (норма {{ feeding.animal.daily_norm }} г/сутки)
+            </p>
+            <p class="card-text">
+                <strong>Дата:</strong> {{ feeding.feeding_date|date:"d.m.Y" }}
+            </p>
+            <p class="card-text">
+                <strong>Корм:</strong> {{ feeding.food }},
+                {{ feeding.amount }} г
+            </p>
+            <p class="card-text">
+                <strong>Сотрудник:</strong> {{ feeding.employee.name }}
+                ({{ feeding.employee.email }})
+            </p>
+            <p class="card-text">
+                <strong>Статус:</strong>
+                {% include "feedings/includes/feeding_status.html" %}
+            </p>
+            {% if feeding.comment %}
                 <p class="card-text">
-                    <strong>Животное:</strong>
-                    <a href="{% url 'animals:detail' feeding.animal_id %}?date={{ feeding.feeding_date }}">
-                        {{ feeding.animal_name }}
-                    </a>
-                    (норма {{ feeding.daily_norm }} г/сутки)
+                    <strong>Комментарий:</strong> {{ feeding.comment }}
                 </p>
-                <p class="card-text">
-                    <strong>Дата:</strong> {{ feeding.feeding_date }}
-                </p>
-                <p class="card-text">
-                    <strong>Корм:</strong> {{ feeding.food }},
-                    {{ feeding.amount }} г
-                </p>
-                <p class="card-text">
-                    <strong>Сотрудник:</strong> {{ feeding.user_name }}
-                    ({{ feeding.user_email }})
-                </p>
-                <p class="card-text">
-                    <strong>Статус:</strong>
-                    {% include "feedings/includes/feeding_status.html" %}
-                </p>
-                {% if feeding.comment %}
-                    <p class="card-text">
-                        <strong>Комментарий:</strong> {{ feeding.comment }}
-                    </p>
-                {% endif %}
-            </div>
+            {% endif %}
         </div>
-    {% else %}
-        <h1 class="text-danger">Кормление не найдено</h1>
-        <p>Кормление с указанным идентификатором отсутствует.</p>
-    {% endif %}
+    </div>
 
     <a
         href="{% url 'feedings:list' %}"

@@ -18,7 +18,7 @@
                 type="date"
                 id="date"
                 name="date"
-                value="{% if feeding_date %}{{ feeding_date }}{% else %}{{ today }}{% endif %}"
+                value="{{ feeding_date|default:today|date:'Y-m-d' }}"
                 class="form-control"
             >
         </div>
@@ -30,12 +30,12 @@
     {% endif %}
 
     {% if feeding_date %}
-        <h2 class="h4">Дата: {{ feeding_date }}</h2>
+        <h2 class="h4">Дата: {{ feeding_date|date:"d.m.Y" }}</h2>
         {% for animal in animals %}
             <article class="card room-card mb-3">
                 <div class="card-body">
                     <h3 class="card-title h5">
-                        <a href="{% url 'animals:detail' animal.id %}?date={{ feeding_date }}">
+                        <a href="{% url 'animals:detail' animal.id %}?date={{ feeding_date|date:'Y-m-d' }}">
                             {{ animal.name }}
                         </a>
                         ({{ animal.species }})

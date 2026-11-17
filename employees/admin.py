@@ -1,3 +1,1 @@
-from django.contrib import admin
-
-# Register your models here.
+# Административная панель будет настроена на следующих работах.

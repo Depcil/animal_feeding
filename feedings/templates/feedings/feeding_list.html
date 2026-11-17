@@ -9,12 +9,63 @@
 
     <nav class="nav nav-pills mb-3">
         <a class="nav-link {% if status == 'all' %}active{% endif %}"
-           href="{% url 'feedings:list' %}">Все</a>
+           href="{% querystring status=None page=None %}">Все</a>
         <a class="nav-link {% if status == 'active' %}active{% endif %}"
-           href="{% url 'feedings:list' %}?status=active">Активные</a>
+           href="{% querystring status='active' page=None %}">Активные</a>
         <a class="nav-link {% if status == 'cancelled' %}active{% endif %}"
-           href="{% url 'feedings:list' %}?status=cancelled">Отмененные</a>
+           href="{% querystring status='cancelled' page=None %}">Отмененные</a>
     </nav>
+
+    <form method="get" class="row g-2 mb-3 align-items-end">
+        <input type="hidden" name="status" value="{{ status }}">
+        <div class="col-sm-3">
+            <label for="date" class="form-label">Дата</label>
+            <input type="date" id="date" name="date" value="{{ selected_date }}"
+                   class="form-control">
+        </div>
+        <div class="col-sm-2">
+            <label for="animal" class="form-label">Животное</label>
+            <select id="animal" name="animal" class="form-select">
+                <option value="">Все</option>
+                {% for animal in animals %}
+                    <option value="{{ animal.pk }}"
+                        {% if selected_animal == animal.pk|stringformat:"s" %}selected{% endif %}>
+                        {{ animal.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-sm-2">
+            <label for="employee" class="form-label">Сотрудник</label>
+            <select id="employee" name="employee" class="form-select">
+                <option value="">Все</option>
+                {% for employee in employees %}
+                    <option value="{{ employee.pk }}"
+                        {% if selected_employee == employee.pk|stringformat:"s" %}selected{% endif %}>
+                        {{ employee.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-sm-2">
+            <label for="sort" class="form-label">Сортировка</label>
+            <select id="sort" name="sort" class="form-select">
+                <option value="date" {% if sort == "date" %}selected{% endif %}>по дате</option>
+                <option value="animal" {% if sort == "animal" %}selected{% endif %}>по животному</option>
+                <option value="employee" {% if sort == "employee" %}selected{% endif %}>по сотруднику</option>
+                <option value="amount" {% if sort == "amount" %}selected{% endif %}>по порции</option>
+            </select>
+        </div>
+        <div class="col-sm-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Найти</button>
+            <a href="{% url 'feedings:list' %}"
+               class="btn btn-outline-secondary">Сбросить</a>
+        </div>
+    </form>
+
+    {% if error %}
+        <p class="text-danger">{{ error }}</p>
+    {% endif %}
 
     <p>
         Всего записей: {{ total }}
@@ -24,9 +75,9 @@
         {% for feeding in feedings %}
             <li class="list-group-item d-flex justify-content-between">
                 <a href="{% url 'feedings:detail' feeding.id %}">
-                    №{{ feeding.id }}: {{ feeding.animal_name }} –
-                    {{ feeding.feeding_date }},
-                    {{ feeding.amount }} г ({{ feeding.user_name }})
+                    №{{ feeding.id }}: {{ feeding.animal.name }} –
+                    {{ feeding.feeding_date|date:"d.m.Y" }},
+                    {{ feeding.amount }} г ({{ feeding.employee.name }})
                 </a>
                 {% include "feedings/includes/feeding_status.html" %}
             </li>
@@ -35,17 +86,28 @@
         {% endfor %}
     </ul>
 
-    {% if pages > 1 %}
-        <nav class="mt-3 d-flex gap-2 align-items-center">
-            {% if prev_page %}
-                <a class="btn btn-outline-secondary btn-sm"
-                   href="{% url 'feedings:list' %}?status={{ status }}&page={{ prev_page }}">←</a>
-            {% endif %}
-            <span>Страница {{ page }} из {{ pages }}</span>
-            {% if next_page %}
-                <a class="btn btn-outline-secondary btn-sm"
-                   href="{% url 'feedings:list' %}?status={{ status }}&page={{ next_page }}">→</a>
-            {% endif %}
+    {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="mt-3">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="{% querystring page=page_obj.previous_page_number %}">←</a>
+                    </li>
+                {% endif %}
+                {% for number in page_obj.paginator.page_range %}
+                    <li class="page-item {% if number == page_obj.number %}active{% endif %}">
+                        <a class="page-link" href="{% querystring page=number %}">{{ number }}</a>
+                    </li>
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="{% querystring page=page_obj.next_page_number %}">→</a>
+                    </li>
+                {% endif %}
+            </ul>
+            <p>Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</p>
         </nav>
     {% endif %}
 {% endblock %}
